@@ -1,5 +1,6 @@
 # FE-2023-examples
-Example scripts for 2023 faculty enrichment program in applied malaria modeling at Northwestern
+Example scripts for 2023 faculty enrichment program in applied malaria modeling at Northwestern.
+This the version of Karime Tahiho
 
 [![en](https://img.shields.io/badge/lang-en-blue.svg)](https://github.com/numalariamodeling/FE-2023-examples/blob/main/README.md)
 [![fr](https://img.shields.io/badge/lang-fr-red.svg)](https://github.com/numalariamodeling/FE-2023-examples/blob/main/README.fr.md)
@@ -14,7 +15,7 @@ Example scripts for 2023 faculty enrichment program in applied malaria modeling 
 
 **Overview:**
 Exercises usually consist of a simulation and an analyzer of simulation outputs. In some weeks, additional scripts exist to prepare simulation inputs or generate additional outputs and plots, or for model calibration as described in the instructions for the respective weeks.
-
+	
 **Supplied scripts & checking results:**
 A few primary scripts are provided at the main level of this repository including running examples and analyzers. Most of the work for this course will be done by you building your own scripts based on the instructions with the help of these scripts. For each week, suggested simulation scripts for comparison or help during the exercise are provided in the respective week's [solution scripts](https://github.com/numalariamodeling/FE-2023-examples/tree/main/solution_scripts) folder. There is also an analyzer collection file in the solutions scripts that includes many commonly used analyzers that you may want to explore in more depth for your project. 
 

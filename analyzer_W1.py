@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     
     expts = {
-        'example_basic' : 'd6992a9f-bc38-4162-9e27-177adfc906c5'
+        'example_inputs' : '521e4077-b36f-4c14-a816-5877d21fb914'
     }
     
 
