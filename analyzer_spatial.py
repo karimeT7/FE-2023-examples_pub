@@ -176,7 +176,7 @@ if __name__ == "__main__":
     ## Experiments Dictionary ##
     ############################
     # {'experiment label' : 'exp_id'}
-    expts = {'FE_example' : '4a8d05e9-64de-4d30-bda3-2e4ae46a3c5c'}
+    expts = {'FE_EXAMPLE' : '15aa5b0f-14aa-4e29-adc6-98c5918a1d11'}
     ## Paths ##
     ###########
     # experiments folder

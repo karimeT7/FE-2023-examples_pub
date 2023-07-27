@@ -1,0 +1,85 @@
+12a13
+> import emodpy_malaria.interventions.treatment_seeking as cm
+33c34
+< burnin_exp_id = "92f3ad06-49ad-48b1-9a41-51283a136fab" #change cet ID avec le sien ici
+---
+> burnin_exp_id = "84f7102e-37db-4cdc-9615-56bddfe5a811" #change cet ID avec le sien ici
+36a38
+> 
+77,80c79,80
+< def build_camp():
+<     """
+<     This function builds a campaign input file for the DTK using emod_api.
+<     """
+---
+> ### Function shipted, added  parameters to the function and case management
+> def build_camp(cm_cov_U5=0.80, cm_start = 1):
+82,83c82,97
+<     camp.set_schema(manifest.schema_file)
+<     
+---
+>     camp.schema_path = manifest.schema_file
+> 
+>     # Add case management
+>     # This example assumes adults will seek treatment 75% as often as U5s and severe cases will seek treatment 15% more than U5s (up to 100% coverage)
+>     cm.add_treatment_seeking(camp, start_day=cm_start, drug=['Artemether', 'Lumefantrine'],
+>                       targets=[{'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5, 
+>                                 'agemin': 0, 'agemax': 5,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5*0.75, 
+>                                 'agemin': 5, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewSevereCase', 'coverage': min(cm_cov_U5*1.15,1), 
+>                                 'agemin': 0, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.5}],
+>                       broadcast_event_name="Received_Treatment")            
+>                      
+86a101
+> 
+143c158
+<     builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+---
+>     #builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+148c163,170
+< 
+---
+>     ## case management sweep 
+>     builder.add_multiple_parameter_sweep_definition(
+>         update_campaign_multiple_parameters,
+>         dict(
+>             cm_cov_U5=[0.0, 0.5, 0.95],
+>             cm_start=[1, 100, 365]
+>         )
+>     )
+150c172
+<     add_event_recorder(task, event_list=["HappyBirthday", "Births"],
+---
+>     add_event_recorder(task, event_list=["HappyBirthday", "Births","Received_Treatment"], #if needed
+168,172c190,194
+<                          		   end_day=365+year*365, reporting_interval=30,
+<                          		   age_bins=[0.25, 5, 115],
+<                          		   max_number_reports=13,
+<                          		   pretty_format=True, 
+<                          		   filename_suffix=f'Monthly_U5_{sim_year}')
+---
+>                                    end_day=365+year*365, reporting_interval=30,
+>                                    age_bins=[0.25, 5, 115],
+>                                    max_number_reports=13,
+>                                    pretty_format=True, 
+>                                    filename_suffix=f'Monthly_U5_{sim_year}')
+179c201
+<     experiment = Experiment.from_builder(builder, task, name="example_sim_pickup")
+---
+>     experiment = Experiment.from_builder(builder, task, name="example_sim_pickup_CM")
+191a214,224
+> 
+>  
+> 
+> ##Second function added 
+> 
+> def update_campaign_multiple_parameters(simulation, cm_cov_U5, cm_start):
+> 
+>     build_campaign_partial = partial(build_camp, cm_cov_U5=cm_cov_U5, cm_start=cm_start)
+>     simulation.task.create_campaign_from_callback(build_campaign_partial)
+>   
+>     return dict(cm_cov_U5=cm_cov_U5, cm_start=cm_start)

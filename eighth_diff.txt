@@ -1,0 +1,210 @@
+1,2c1
+< #Import the python module needed  
+< # experience id for this code : a6ff9581-4c10-44a5-860d-5e79c606f7e9 suite id : 28f180da-cb49-47a0-9417-2d8ef313ee3c
+---
+> #Import the python module needed 
+13a13
+> import emodpy_malaria.interventions.treatment_seeking as cm
+28c28,30
+< sim_start_year=2000
+---
+> from utils_slurm import build_burnin_df
+> 
+> serialize_years= 50 #This shouls match to burnin
+30,31c32,36
+< serialize_years = 50
+< num_seeds=5
+---
+> pickup_years=5
+> #Il faut remplacer dans la ligne suivante ton experiment ID obtenu en exécutant run-example_burnin.py
+> burnin_exp_id = "a6ff9581-4c10-44a5-860d-5e79c606f7e9" #change cet ID avec le sien ici
+> sim_start_year=2000
+> num_seeds=3
+51c56
+<     config.parameters.Simulation_Duration = sim_years*365
+---
+>     config.parameters.Simulation_Duration = pickup_years*365
+53,56d57
+<     config.parameters.Serialized_Population_Writing_Type = "TIMESTEP"
+<     config.parameters.Serialization_Time_Steps = [365 * serialize_years]
+<     config.parameters.Serialization_Mask_Node_Write = 0
+<     config.parameters.Serialization_Precision = "REDUCED"
+58c59,62
+< 
+---
+>     #Add serialization - add pickup "read" parameters to config.json
+>     config.parameters.Serialized_Population_Reading_Type = "READ"
+>     config.parameters.Serialization_Mask_Node_Read = 0
+>     config.parameters.Serialization_Time_Steps = [serialize_years*365]
+60a65,66
+> 
+> 
+73,76c79,80
+< def build_camp():
+<     """
+<     This function builds a campaign input file for the DTK using emod_api.
+<     """
+---
+> ### Function shipted, added  parameters to the function and case management
+> def build_camp(cm_cov_U5=0.80, cm_start = 1):
+78,79c82,116
+<     camp.set_schema(manifest.schema_file)
+<     
+---
+>     camp.schema_path = manifest.schema_file
+> 
+>     # Add case management
+>     # This example assumes adults will seek treatment 75% as often as U5s and severe cases will seek treatment 15% more than U5s (up to 100% coverage)
+>     cm_cov_U5_low=0.4
+>     cm_cov_U5_high=0.75
+>     cm.add_treatment_seeking(camp, start_day=cm_start, drug=['Artemether', 'Lumefantrine'],
+>                       targets=[{'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5_low, 
+>                                 'agemin': 0, 'agemax': 5,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5*0.75, 
+>                                 'agemin': 5, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewSevereCase', 'coverage': min(cm_cov_U5*1.15,1), 
+>                                 'agemin': 0, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.5}],
+>                       ind_property_restrictions=[{'Access': 'Low'}], ##ligne added 
+>                       broadcast_event_name="Received_Treatment")
+>     
+>     #duplication of the rprecedent chunk f code : treatment : high 
+>     cm.add_treatment_seeking(camp, start_day=cm_start, drug=['Artemether', 'Lumefantrine'],
+>                       targets=[{'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5_high, 
+>                                 'agemin': 0, 'agemax': 5,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5*0.75, 
+>                                 'agemin': 5, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.3},
+>                                {'trigger': 'NewSevereCase', 'coverage': min(cm_cov_U5*1.15,1), 
+>                                 'agemin': 0, 'agemax': 115,
+>                                 'seek': 1,'rate': 0.5}],
+>                       ind_property_restrictions=[{'Access': 'High'}], ##ligne added 
+>                       broadcast_event_name="Received_Treatment")  
+>                   
+>                   
+>                      
+82a120
+> 
+88,89c126
+<     demog = Demographics.from_template_node(lat=1, lon=2, pop=1000, name="Example_Site")
+<     demog.SetEquilibriumVitalDynamics()
+---
+>     demog = Demographics.from_template_node(lat=0.4479, lon=33.2026, pop=500, name="Example_Site")
+91,92c128,129
+<     
+<     # Add age distribution
+---
+>     demog.SetEquilibriumVitalDynamics()
+> 
+95c132
+< 
+---
+>     
+102d138
+<   
+103a140,149
+> def update_serialize_parameters(simulation, df, x: int):
+> 
+>    path = df["serialized_file_path"][x]
+>    seed = int(df["Run_Number"][x])
+> 
+>    simulation.task.set_parameter("Serialized_Population_Filenames", df["Serialized_Population_Filenames"][x])
+>    simulation.task.set_parameter("Serialized_Population_Path", os.path.join(path, "output"))
+>    simulation.task.set_parameter("Run_Number", seed) #match pickup simulation run number to burnin simulation
+> 
+>    return {"Run_Number":seed}
+137c183
+<     builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+---
+>     #builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+139c185,195
+<     
+---
+>     # Create burnin df, retrieved from burnin ID (defined above)
+>     burnin_df = build_burnin_df(burnin_exp_id, platform, serialize_years*365)
+>     builder.add_sweep_definition(partial(update_serialize_parameters, df=burnin_df), range(len(burnin_df.index)))
+>     ## case management sweep 
+>     builder.add_multiple_parameter_sweep_definition(
+>         update_campaign_multiple_parameters,
+>         dict(
+>             cm_cov_U5=[0.0, 0.5, 0.95],
+>             cm_start=[1, 100, 365]
+>         )
+>     )
+141c197
+<     add_event_recorder(task, event_list=["HappyBirthday", "Births"],
+---
+>     add_event_recorder(task, event_list=["HappyBirthday", "Births","Received_Treatment"], #if needed
+144,151c200,207
+<                        max_age_years=100, ips_to_record=["Access"]) 
+<     
+<     #add_malaria_summary_report(task, manifest, start_day=1, 
+<     #                           end_day=sim_years*365, 
+<    #                            reporting_interval=30,
+<   #                             age_bins=[0.25, 5, 115],
+<    #                            max_number_reports=20,
+<     #                           filename_suffix='monthly',
+---
+>                        max_age_years=100)
+>     """
+>     add_malaria_summary_report(task, manifest, start_day=1, 
+>                                end_day=sim_years*365, 
+>                                reporting_interval=30,
+>                                age_bins=[0.25, 5, 115],
+>                                max_number_reports=20,
+>                                filename_suffix='monthly',
+153c209,210
+<      #                         pretty_format=True)"""
+---
+>                               pretty_format=True)
+>       """
+155,163c212,229
+<     for year in range(sim_years):
+<         start_day = 0 + 365 * year
+<         sim_year = sim_start_year + year
+<         add_malaria_summary_report(task, manifest, start_day=start_day,
+<                                    end_day=365+year*365, reporting_interval=30,
+<                                    age_bins=[0.25, 5, 115],
+<                                    max_number_reports=13,
+<                                    pretty_format=True, 
+<                                    filename_suffix=f'Monthly_U5_{sim_year}')
+---
+>     for i in range(pickup_years):
+>         add_malaria_summary_report(task, manifest, start_day=1+365*i,
+>                            end_day=365 + i * 365, reporting_interval=30,
+>                            age_bins=[0.25, 5, 115],
+>                            max_number_reports=serialize_years,
+>                            must_have_ip_key_value='Access:High',
+>                            filename_suffix=f'Monthly_highaccess_{sim_start_year+i}',
+>                            pretty_format=True)
+>     
+>     for i in range(pickup_years):
+>         add_malaria_summary_report(task, manifest, start_day=1+365*i,
+>                            end_day=365 + i * 365, reporting_interval=30,
+>                            age_bins=[0.25, 5, 115],
+>                            max_number_reports=serialize_years,
+>                            must_have_ip_key_value='Access:Low',
+>                            filename_suffix=f'Monthly_lowaccess_{sim_start_year+i}',
+>                            pretty_format=True)
+>     
+170c236
+<     experiment = Experiment.from_builder(builder, task, name="example_sim_burnin")
+---
+>     experiment = Experiment.from_builder(builder, task, name="example_sim_pickup_CM")
+183a250,260
+>  
+> 
+> ##Second function added 
+> 
+> def update_campaign_multiple_parameters(simulation, cm_cov_U5, cm_start):
+> 
+>     build_campaign_partial = partial(build_camp, cm_cov_U5=cm_cov_U5, cm_start=cm_start)
+>     simulation.task.create_campaign_from_callback(build_campaign_partial)
+>   
+>     return dict(cm_cov_U5=cm_cov_U5, cm_start=cm_start)
+> 
+195d271
+< 

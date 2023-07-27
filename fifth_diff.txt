@@ -1,0 +1,62 @@
+27,30c27
+< sim_start_year=2000
+< sim_years=50
+< serialize_years = 50
+< num_seeds=5
+---
+> from utils_slurm import build_burnin_df
+31a29,35
+> serialize_years= 50 #This shouls match to burnin
+> sim_years=50
+> pickup_years=5
+> #Il faut remplacer dans la ligne suivante ton experiment ID obtenu en exécutant run-example_burnin.py
+> burnin_exp_id = "92f3ad06-49ad-48b1-9a41-51283a136fab" #change cet ID avec le sien ici
+> sim_start_year=2000
+> num_seeds=3
+50c54
+<     config.parameters.Simulation_Duration = sim_years*365
+---
+>     config.parameters.Simulation_Duration = pickup_years*365
+52,55d55
+<     config.parameters.Serialized_Population_Writing_Type = "TIMESTEP"
+<     config.parameters.Serialization_Time_Steps = [365 * serialize_years]
+<     config.parameters.Serialization_Mask_Node_Write = 0
+<     config.parameters.Serialization_Precision = "REDUCED"
+57c57,60
+< 
+---
+>     #Add serialization - add pickup "read" parameters to config.json
+>     config.parameters.Serialized_Population_Reading_Type = "READ"
+>     config.parameters.Serialization_Mask_Node_Read = 0
+>     config.parameters.Serialization_Time_Steps = [serialize_years*365]
+59a63,64
+> 
+> 
+87c92
+<     demog = Demographics.from_template_node(lat=0.4479, lon=33.2026, pop=1000, name="Example_Site")
+---
+>     demog = Demographics.from_template_node(lat=0.4479, lon=33.2026, pop=500, name="Example_Site")
+94a100,109
+> def update_serialize_parameters(simulation, df, x: int):
+> 
+>    path = df["serialized_file_path"][x]
+>    seed = int(df["Run_Number"][x])
+> 
+>    simulation.task.set_parameter("Serialized_Population_Filenames", df["Serialized_Population_Filenames"][x])
+>    simulation.task.set_parameter("Serialized_Population_Path", os.path.join(path, "output"))
+>    simulation.task.set_parameter("Run_Number", seed) #match pickup simulation run number to burnin simulation
+> 
+>    return {"Run_Number":seed}
+130c145,148
+<     
+---
+>     # Create burnin df, retrieved from burnin ID (defined above)
+>     burnin_df = build_burnin_df(burnin_exp_id, platform, serialize_years*365)
+>     builder.add_sweep_definition(partial(update_serialize_parameters, df=burnin_df), range(len(burnin_df.index)))
+> 
+161c179
+<     experiment = Experiment.from_builder(builder, task, name="example_sim_burnin")
+---
+>     experiment = Experiment.from_builder(builder, task, name="example_sim_pickup")
+186d203
+< 

@@ -98,7 +98,7 @@ if __name__ == "__main__":
     expts = {
         # 'week2_weather' : '2c090358-cb7b-44e5-a2fd-842a6c23a5b7'
         # 'week2_outputs' : '26f947c3-0770-46df-bc6a-c1c77e36f686'
-        'week3_calib': 'f27386a6-3958-46b3-8ec0-08df81c67ffc'
+        'week3_calib': '95c629bd-6da9-4853-b43a-0483d088724b'
     }
 
     jdir = manifest.job_directory

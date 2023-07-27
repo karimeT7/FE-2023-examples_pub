@@ -1,0 +1,28 @@
+1a2
+> import numpy as np
+26c27
+< sim_years = 1
+---
+> sim_years = 20
+27a29
+> sim_start_year=2000
+120c122,123
+< 
+---
+>     builder.add_sweep_definition(partial(set_param, param='x_Temporary_Larval_Habitat'), np.logspace(-0.5,1,10))
+>     
+133c136,147
+<                                pretty_format=True)
+---
+>            
+>                               pretty_format=True)
+>     ####################################################
+>     for year in range(sim_years):
+>         start_day = 0 + 365 * year
+>         sim_year = sim_start_year + year
+>         add_malaria_summary_report(task, manifest, start_day=start_day,
+>                          		   end_day=365+year*365, reporting_interval=30,
+>                          		   age_bins=[0.25, 5, 115],
+>                          		   max_number_reports=13,
+>                          		   pretty_format=True, 
+>                          		   filename_suffix=f'Monthly_U5_{sim_year}')

@@ -1,0 +1,37 @@
+27c27
+< 
+---
+> num_seeds = 5
+50a51,61
+> def set_param(simulation, param, value):
+>     """
+>     Set specific parameter value
+>     Args:
+>         simulation: idmtools Simulation
+>         param: parameter
+>         value: new value
+>     Returns:
+>         dict
+>     """
+>     return simulation.task.set_parameter(param, value)
+104,106c115,121
+<     
+<     
+<     task.set_sif(manifest.SIF_PATH, platform)
+---
+>    
+>     # Create simulation sweep with builder
+>     builder = SimulationBuilder()
+> 
+>     builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+> 
+>     #REPORTS
+125c140
+<     experiment = Experiment.from_task(task, name= f'{user}_FE_example_outputs')
+---
+>     experiment = Experiment.from_builder(builder, task, name="example_sim_sweep")
+140c155,156
+< 
+---
+>     
+>     

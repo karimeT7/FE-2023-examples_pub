@@ -1,0 +1,163 @@
+1c1,2
+< #Import the python module needed 
+---
+> #Import the python module needed  
+> # experience id for this code : a6ff9581-4c10-44a5-860d-5e79c606f7e9 suite id : 28f180da-cb49-47a0-9417-2d8ef313ee3c
+13d13
+< import emodpy_malaria.interventions.treatment_seeking as cm
+28,34d27
+< from utils_slurm import build_burnin_df
+< 
+< serialize_years= 50 #This shouls match to burnin
+< sim_years=50
+< pickup_years=5
+< #Il faut remplacer dans la ligne suivante ton experiment ID obtenu en exécutant run-example_burnin.py
+< burnin_exp_id = "84f7102e-37db-4cdc-9615-56bddfe5a811" #change cet ID avec le sien ici
+36c29,31
+< num_seeds=3
+---
+> sim_years=50
+> serialize_years = 50
+> num_seeds=5
+56c51
+<     config.parameters.Simulation_Duration = pickup_years*365
+---
+>     config.parameters.Simulation_Duration = sim_years*365
+57a53,56
+>     config.parameters.Serialized_Population_Writing_Type = "TIMESTEP"
+>     config.parameters.Serialization_Time_Steps = [365 * serialize_years]
+>     config.parameters.Serialization_Mask_Node_Write = 0
+>     config.parameters.Serialization_Precision = "REDUCED"
+59,64d57
+<     #Add serialization - add pickup "read" parameters to config.json
+<     config.parameters.Serialized_Population_Reading_Type = "READ"
+<     config.parameters.Serialization_Mask_Node_Read = 0
+<     config.parameters.Serialization_Time_Steps = [serialize_years*365]
+<     return config
+< 
+65a59
+>     return config
+79,82c73,76
+< ### Function shipted, added  parameters to the function and case management
+< def build_camp(cm_cov_U5=0.80, cm_start = 1):
+< 
+<     camp.schema_path = manifest.schema_file
+---
+> def build_camp():
+>     """
+>     This function builds a campaign input file for the DTK using emod_api.
+>     """
+84,97c78,79
+<     # Add case management
+<     # This example assumes adults will seek treatment 75% as often as U5s and severe cases will seek treatment 15% more than U5s (up to 100% coverage)
+<     cm.add_treatment_seeking(camp, start_day=cm_start, drug=['Artemether', 'Lumefantrine'],
+<                       targets=[{'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5, 
+<                                 'agemin': 0, 'agemax': 5,
+<                                 'seek': 1,'rate': 0.3},
+<                                {'trigger': 'NewClinicalCase', 'coverage': cm_cov_U5*0.75, 
+<                                 'agemin': 5, 'agemax': 115,
+<                                 'seek': 1,'rate': 0.3},
+<                                {'trigger': 'NewSevereCase', 'coverage': min(cm_cov_U5*1.15,1), 
+<                                 'agemin': 0, 'agemax': 115,
+<                                 'seek': 1,'rate': 0.5}],
+<                       broadcast_event_name="Received_Treatment")            
+<                      
+---
+>     camp.set_schema(manifest.schema_file)
+>     
+101d82
+< 
+107,108c88
+<     demog = Demographics.from_template_node(lat=0.4479, lon=33.2026, pop=500, name="Example_Site")
+<     
+---
+>     demog = Demographics.from_template_node(lat=1, lon=2, pop=1000, name="Example_Site")
+110c90,92
+< 
+---
+>     
+>     
+>     # Add age distribution
+113,118d94
+<     return demog
+< 
+< def update_serialize_parameters(simulation, df, x: int):
+< 
+<    path = df["serialized_file_path"][x]
+<    seed = int(df["Run_Number"][x])
+120,122c96,102
+<    simulation.task.set_parameter("Serialized_Population_Filenames", df["Serialized_Population_Filenames"][x])
+<    simulation.task.set_parameter("Serialized_Population_Path", os.path.join(path, "output"))
+<    simulation.task.set_parameter("Run_Number", seed) #match pickup simulation run number to burnin simulation
+---
+>     # Add custom IP to demographics                              
+>     initial_distribution = [0.5, 0.5]
+>     demog.AddIndividualPropertyAndHINT(Property="Access", Values=["Low", "High"],
+>                                         InitialDistribution=initial_distribution)                                  
+>                                       
+>     return demog
+>   
+124d103
+<    return {"Run_Number":seed}
+158c137
+<     #builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+---
+>     builder.add_sweep_definition(partial(set_param, param='Run_Number'), range(num_seeds))
+160,170c139
+<     # Create burnin df, retrieved from burnin ID (defined above)
+<     burnin_df = build_burnin_df(burnin_exp_id, platform, serialize_years*365)
+<     builder.add_sweep_definition(partial(update_serialize_parameters, df=burnin_df), range(len(burnin_df.index)))
+<     ## case management sweep 
+<     builder.add_multiple_parameter_sweep_definition(
+<         update_campaign_multiple_parameters,
+<         dict(
+<             cm_cov_U5=[0.0, 0.5, 0.95],
+<             cm_start=[1, 100, 365]
+<         )
+<     )
+---
+>     
+172c141
+<     add_event_recorder(task, event_list=["HappyBirthday", "Births","Received_Treatment"], #if needed
+---
+>     add_event_recorder(task, event_list=["HappyBirthday", "Births"],
+175c144
+<                        max_age_years=100)
+---
+>                        max_age_years=100, ips_to_record=["Access"]) 
+177,182c146,151
+<     add_malaria_summary_report(task, manifest, start_day=1, 
+<                                end_day=sim_years*365, 
+<                                reporting_interval=30,
+<                                age_bins=[0.25, 5, 115],
+<                                max_number_reports=20,
+<                                filename_suffix='monthly',
+---
+>     #add_malaria_summary_report(task, manifest, start_day=1, 
+>     #                           end_day=sim_years*365, 
+>    #                            reporting_interval=30,
+>   #                             age_bins=[0.25, 5, 115],
+>    #                            max_number_reports=20,
+>     #                           filename_suffix='monthly',
+184c153
+<                               pretty_format=True)
+---
+>      #                         pretty_format=True)"""
+201c170
+<     experiment = Experiment.from_builder(builder, task, name="example_sim_pickup_CM")
+---
+>     experiment = Experiment.from_builder(builder, task, name="example_sim_burnin")
+215,225d183
+<  
+< 
+< ##Second function added 
+< 
+< def update_campaign_multiple_parameters(simulation, cm_cov_U5, cm_start):
+< 
+<     build_campaign_partial = partial(build_camp, cm_cov_U5=cm_cov_U5, cm_start=cm_start)
+<     simulation.task.create_campaign_from_callback(build_campaign_partial)
+<   
+<     return dict(cm_cov_U5=cm_cov_U5, cm_start=cm_start)
+< 
+236a195
+> 

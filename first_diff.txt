@@ -1,0 +1,21 @@
+22a23
+> from emodpy_malaria.reporters.builtin import *
+106c107,118
+< 
+---
+>     add_event_recorder(task, event_list=["HappyBirthday", "Births"],
+>                        start_day=1, end_day=sim_years*365, 
+>                        node_ids=[1], min_age_years=0,
+>                        max_age_years=100)
+>     
+>     add_malaria_summary_report(task, manifest, start_day=1, 
+>                                end_day=sim_years*365, 
+>                                reporting_interval=30,
+>                                age_bins=[0.25, 5, 115],
+>                                max_number_reports=20,
+>                                filename_suffix='monthly',
+>                                pretty_format=True)
+113c125
+<     experiment = Experiment.from_task(task, name= f'{user}_FE_example_inputs')
+---
+>     experiment = Experiment.from_task(task, name= f'{user}_FE_example_outputs')

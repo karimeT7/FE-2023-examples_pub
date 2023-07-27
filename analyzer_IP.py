@@ -11,7 +11,7 @@ import manifest
 
 class MonthlyPfPRAnalyzerIP(IAnalyzer):
 
-    def __init__(self, expt_name, sweep_variables=None, working_dir='./', start_year=2020, end_year=2023,
+    def __init__(self, expt_name, sweep_variables=None, working_dir='./', start_year=2000, end_year=2004,
                  burnin=None, ipfilter=''):
 
         super(MonthlyPfPRAnalyzerIP, self).__init__(working_dir=working_dir,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     
     expts = {
-        'week4_IP_CM' : '43220559-e527-41e6-8460-f6ad88da9f73'
+        'week4_IP_CM' : '3cc22627-89e0-4ee7-832c-5a896c2f3461'
     }
     
 
@@ -105,14 +105,14 @@ if __name__ == "__main__":
         for expt_name, exp_id in expts.items():
           
             analyzer = [MonthlyPfPRAnalyzerIP(expt_name=expt_name,
-                                      start_year=2010,
-                                      end_year=2015,
+                                      start_year=2000,
+                                      end_year=2004,
                                       sweep_variables=sweep_variables,
                                       working_dir=wdir,
                                       ipfilter='highaccess'),
                         MonthlyPfPRAnalyzerIP(expt_name=expt_name,
-                                      start_year=2010,
-                                      end_year=2015,
+                                      start_year=2000,
+                                      end_year=2004,
                                       sweep_variables=sweep_variables,
                                       working_dir=wdir,
                                       ipfilter='lowaccess')]

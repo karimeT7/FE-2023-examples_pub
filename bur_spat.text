@@ -1,0 +1,150 @@
+1,2c1
+< #Import the python module needed  
+< # experience id for this code : a6ff9581-4c10-44a5-860d-5e79c606f7e9 suite id : 28f180da-cb49-47a0-9417-2d8ef313ee3c
+---
+> #Import the python module needed 
+13a13
+> import emodpy_malaria.interventions.treatment_seeking as cm
+28,31c28,32
+< sim_start_year=2000
+< sim_years=50
+< serialize_years = 50
+< num_seeds=5
+---
+> from utils_slurm import build_burnin_df
+> 
+> # Addining the numbers of sweepinp
+> num_seeds = 5
+> # Simmulation starting year definition
+32a34,36
+> sim_start_year=2000
+> ###############################
+> serialize_years=50
+38a43,44
+>     
+>     # The next four conf is made for the purpose of adding climate data in the modele. 
+48a55,56
+>     
+>     #Addind information about the types of mosquito 
+50,60c58,62
+< 
+<     config.parameters.Simulation_Duration = sim_years*365
+<     #config.parameters.Run_Number = 3 #moved from 0 to 3
+<     config.parameters.Serialized_Population_Writing_Type = "TIMESTEP"
+<     config.parameters.Serialization_Time_Steps = [365 * serialize_years]
+<     config.parameters.Serialization_Mask_Node_Write = 0
+<     config.parameters.Serialization_Precision = "REDUCED"
+<     config.parameters.x_Temporary_Larval_Habitat=0.681292
+< 
+<     return config
+< 
+---
+>   
+>     config.parameters.Simulation_Duration = sim_years*365 #Adding the numbers of values to be generated 
+>     config.parameters.Run_Number = 0 #The number of time each values must be generated randomly 
+>     
+>   
+73,82d74
+< def build_camp():
+<     """
+<     This function builds a campaign input file for the DTK using emod_api.
+<     """
+< 
+<     camp.set_schema(manifest.schema_file)
+<     
+<     return camp
+< 
+< 
+88,89c80,84
+<     demog = Demographics.from_template_node(lat=1, lon=2, pop=1000, name="Example_Site")
+<     demog.SetEquilibriumVitalDynamics()
+---
+>     # NOTE: The id_ref used to generate climate and demographics must match! ID climate :da6dfa3f-6526-ee11-aa08-b88303911bc1
+>     demog = Demographics.from_csv(input_file = os.path.join(manifest.input_dir,"demographics","nodes.csv"), 
+>                                                         id_ref="EXAMPLE", 
+>                                                         init_prev = 0.01, 
+>                                                         include_biting_heterogeneity = True)
+91,92c86,87
+<     
+<     # Add age distribution
+---
+>     demog.SetEquilibriumVitalDynamics()
+> 
+95,100d89
+< 
+<     # Add custom IP to demographics                              
+<     initial_distribution = [0.5, 0.5]
+<     demog.AddIndividualPropertyAndHINT(Property="Access", Values=["Low", "High"],
+<                                         InitialDistribution=initial_distribution)                                  
+<                                       
+102d90
+<   
+133c121,122
+<    
+---
+>     
+>     ##########################For sweeps builder 
+138d126
+<     #builder.add_sweep_definition(partial(set_param, param='x_Temporary_Larval_Habitat'), np.logspace(-0.5,1,10))
+140c128,135
+<     #REPORTS
+---
+>     #***************************************************************************************
+>     #Step of Calibration: adding this ligne conserning the laval habitat,help simulted mosquitos density
+>     builder.add_sweep_definition(partial(set_param, param='x_Temporary_Larval_Habitat'), np.logspace(-0.5,1,10)) 
+>     
+>     #####################Adiding summary reporter and event recorder 
+>     
+>     
+>     #REPORTS*****************************************************
+142,154c137,153
+<                        start_day=1, end_day=sim_years*365, 
+<                        node_ids=[1], min_age_years=0,
+<                        max_age_years=100, ips_to_record=["Access"]) 
+<     
+<     #add_malaria_summary_report(task, manifest, start_day=1, 
+<     #                           end_day=sim_years*365, 
+<    #                            reporting_interval=30,
+<   #                             age_bins=[0.25, 5, 115],
+<    #                            max_number_reports=20,
+<     #                           filename_suffix='monthly',
+<            
+<      #                         pretty_format=True)"""
+<     ####################################################
+---
+>                          start_day=1, end_day=sim_years*365, 
+>                          node_ids=[1], min_age_years=0,
+>                          max_age_years=100)
+>     
+>  
+>     
+>     add_malaria_summary_report(task, manifest, start_day=1, 
+>                                  end_day=sim_years*365, 
+>                                  reporting_interval=30,
+>                                  age_bins=[0.25, 5, 115],
+>                                  max_number_reports=20,
+>                                  filename_suffix='monthly',
+>                                  pretty_format=True)
+>     
+>     #**************************************************************************
+>     ##########Ajouter pour la génration des output de la suite de la calibration
+>     
+163a163,164
+>    
+> 
+170,171c171,172
+<     experiment = Experiment.from_builder(builder, task, name="example_sim_burnin")
+< 
+---
+>     **********************A modifier
+>     experiment = Experiment.from_task(task, name= f'{user}_FE_example_inputs')
+172a174
+>     
+185,186c187
+<     
+<     
+---
+> 
+194a196,197
+> 
+> 

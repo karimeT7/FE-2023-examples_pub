@@ -165,7 +165,7 @@ if __name__ == "__main__":
     
     expts = {
         #'week2_weather' : '2c090358-cb7b-44e5-a2fd-842a6c23a5b7'
-        'week2_outputs' : 'fc883012-dbae-4d99-ad28-c08aec77034a'
+        'week3_out_sweep' : 'cd818ae0-f1fc-4824-9028-cbc75b905ec3'
     }
     
 
